@@ -1,0 +1,4 @@
+maintest.c
+tidy_report.txt
+compile_flags.txt
+tools/trace-check/build

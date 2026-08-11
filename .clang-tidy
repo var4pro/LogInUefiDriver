@@ -1,0 +1,9 @@
+Checks: "clang-diagnostic-*,clang-analyzer-*,bugprone-*,performance-*"
+
+HeaderFilterRegex: '^(?!.*edk2).*$'
+
+WarningsAsErrors: ''
+SystemHeaders: false
+
+CheckOptions:
+  bugprone-unused-return-value.CheckedReturnTypes: '.*EFI_STATUS;.*RETURN_STATUS'

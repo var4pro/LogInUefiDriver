@@ -1,0 +1,32 @@
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = LogInDriver
+  FILE_GUID                      = 1A6FF461-0C3A-4351-B4BD-E596B27C6F7C
+  MODULE_TYPE                    = UEFI_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = DriverEntryPoint
+
+[Sources]
+  #maintest.c
+  Main.c
+  Allocator.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  SecurityPkg/SecurityPkg.dec
+  CryptoPkg/CryptoPkg.dec
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  UefiLib
+  BaseLib
+  BaseMemoryLib
+  BaseCryptLib
+
+[Protocols]
+  gEfiTcg2ProtocolGuid
+
+[BuildOptions]
+GCC:*_*_X64_CC_FLAGS = -std=c23 -Wno-error
