@@ -1,4 +1,5 @@
 #pragma once
+#include <Uefi.h>
 #include <Library/CpuLib.h>
 #include <Library/DebugLib.h>
 #include <Library/UefiLib.h>

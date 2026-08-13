@@ -2,6 +2,7 @@
 -ffreestanding
 -nostdinc
 -fshort-wchar
+-Iinclude/
 -I$EDK2_PATH/ArmPkg/Include
 -I$EDK2_PATH/ArmPkg/Include/X64
 -I$EDK2_PATH/ArmPlatformPkg/Include

@@ -2,6 +2,7 @@
 -ffreestanding
 -nostdinc
 -fshort-wchar
+-Iinclude/
 -I/home/var4p/Documents/uefi_workspace/edk2/ArmPkg/Include
 -I/home/var4p/Documents/uefi_workspace/edk2/ArmPkg/Include/X64
 -I/home/var4p/Documents/uefi_workspace/edk2/ArmPlatformPkg/Include

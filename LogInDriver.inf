@@ -8,8 +8,8 @@
 
 [Sources]
   #maintest.c
-  Main.c
-  Allocator.c
+  src/Main.c
+  src/Allocator.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -29,4 +29,4 @@
   gEfiTcg2ProtocolGuid
 
 [BuildOptions]
-GCC:*_*_X64_CC_FLAGS = -std=c23 -Wno-error
+GCC:*_*_X64_CC_FLAGS = -std=c23 -Wno-error -I$(MODULE_DIR)/include/

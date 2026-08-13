@@ -13,9 +13,9 @@ include(AddLLVM)
 include_directories(${LLVM_INCLUDE_DIRS} ${CLANG_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
-add_executable(trace-check main.cpp)
+add_library(UefiTidyModule SHARED main2.cpp)
 
-target_link_libraries(trace-check
+target_link_libraries(UefiTidyModule
     PRIVATE
     clang-cpp
     LLVM

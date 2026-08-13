@@ -1,6 +1,6 @@
-#include "Allocator.h"
 #include "LogUtils.h"
 #include "Utils.h"
+#include "Allocator.h"
 
 #include <Uefi.h>
 
@@ -31,8 +31,9 @@ static UINTN g_terminaСols = 0, g_terminalRows = 0;
                                                     OUT INTN* actualSecretLen);
 [[nodiscard]] extern EFI_STATUS EFIAPI MeasureSecretToTpm(IN UINT8 secretData[], INTN secretSize);
 
+
 EFI_STATUS EFIAPI DriverEntryPoint(IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE* SystemTable) {
-    char userPass[MAX_PASS_LEN + 1] = {0};
+    char userPass[MAX_PASS_LEN] = {0};
     INTN i = 0;
     CHECK_FOR_ERROR(PrintForm1Time());
     CHECK_FOR_ERROR(GetUserPassword(userPass, &i));
@@ -41,16 +42,16 @@ EFI_STATUS EFIAPI DriverEntryPoint(IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABL
     INTN actualSize = 0;
     Print(L"\'%a\'", userPass); // TODO: REMOVE
     CHECK_FOR_ERROR(UnsealSecret(userPass, i, secretBuffer, MAX_SECRET_LEN, &actualSize));
-    // CHECK_FOR_ERROR(MeasureSecretToTpm(secretBuffer, actualSize));
-    // TODO: add necessarily ZeroMem for important data(userPass and secret)
-    // TODO: add clean up
+    CHECK_FOR_ERROR(MeasureSecretToTpm(secretBuffer, actualSize));
 
+    ZeroMem(userPass, MAX_SECRET_LEN);
+    ZeroMem(secretBuffer, MAX_SECRET_LEN);
     return EFI_SUCCESS;
 }
 
 // print text and set cursor 1 row below in the center
 EFI_STATUS EFIAPI PrintForm1Time() {
-    //TRACE_FUNCTION();
+    TRACE_FUNCTION();
     CHECK_FOR_ERROR(gST->ConOut->ClearScreen(gST->ConOut));
     CHECK_FOR_ERROR(gST->ConOut->EnableCursor(gST->ConOut, FALSE));
     CHECK_FOR_ERROR(gST->ConOut->QueryMode(gST->ConOut, gST->ConOut->Mode->Mode, &g_terminaСols, &g_terminalRows));
@@ -107,73 +108,77 @@ EFI_STATUS EFIAPI GetUserPassword(OUT char userPass[], OUT INTN* i) {
     return EFI_SUCCESS;
 }
 
-#pragma pack(1)
-typedef struct {
-    TPMI_ST_COMMAND_TAG tag;
-    UINT32 commandSize;
-    TPM_CC commandCode;
-
-    TPMI_DH_OBJECT itemHandle;
-    UINT32 authorizationSize;
-    UINT32 authHandle;
-    UINT16 nonceCallerSize;  // 0 in my case
-    UINT8 sessionAttributes; // may be only 1
-    UINT16 hmacSize;
-    UINT8 hmac[MAX_PASS_LEN];
-} TPM2_UNSEAL_COMMAND_LOCAL;
-
-typedef struct {
-    TPM_ST tag;
-    UINT32 responseSize;
-    TPM_RC responseCode;
-    UINT8 outData[0];
-} TPM2_UNSEAL_RESPONSE_LOCAL;
-#pragma pack()
-
 EFI_STATUS EFIAPI UnsealSecret(IN char userPass[], INTN userLen, OUT UINT8 secretBuffer[], INTN maxSecretLen,
-                               OUT INTN* actualSecretLen) {
-    TRACE_FUNCTION();
-    if (userPass == NULL || secretBuffer == NULL || actualSecretLen == NULL) return EFI_INVALID_PARAMETER;
-    EFI_TCG2_PROTOCOL* tcg2Protocol;
-    CHECK_FOR_ERROR(gBS->LocateProtocol(&gEfiTcg2ProtocolGuid, NULL, (VOID**)&tcg2Protocol));
+                               OUT INTN* actualSecretLen){return EFI_SUCCESS;};//mock
+EFI_STATUS EFIAPI MeasureSecretToTpm(IN UINT8 secretData[], INTN secretSize) { return EFI_SUCCESS; }; // mock
 
-    UINT32 authSize = sizeof(TPM2_UNSEAL_COMMAND_LOCAL) -
-                      (sizeof(TPMI_ST_COMMAND_TAG) + sizeof(UINT32) + sizeof(TPM_CC) + sizeof(TPMI_DH_OBJECT) + sizeof(UINT32));
+// #pragma pack(1)
+// typedef struct {
+//     TPMI_ST_COMMAND_TAG tag;
+//     UINT32 commandSize;
+//     TPM_CC commandCode;
 
-    TPM2_UNSEAL_COMMAND_LOCAL cmd;
-    ZeroMem(&cmd, sizeof(cmd));
-    cmd.tag = SwapBytes16(TPM_ST_SESSIONS);       // 0x8002
-    cmd.commandSize = SwapBytes32(sizeof(cmd));   // Total command size
-    cmd.commandCode = SwapBytes32(TPM_CC_Unseal); // 0x0000015E
-    cmd.itemHandle = SwapBytes32(g_itemHandle);
-    cmd.authorizationSize = SwapBytes32(authSize);    // Size of auth section
-    cmd.authHandle = SwapBytes32(TPM_RS_PW);          // 0x40000009
-    cmd.nonceCallerSize = SwapBytes16(0);             // No nonce
-    cmd.sessionAttributes = 0x00;                     // Session flags
-    cmd.hmacSize = SwapBytes16((UINT16)MAX_PASS_LEN); // Size of HMAC buffer
-    Sha256HashAll(userPass, userLen, cmd.hmac);
+//     TPMI_DH_OBJECT itemHandle;
+//     UINT32 authorizationSize;
+//     UINT32 authHandle;
+//     UINT16 nonceCallerSize;  // 0 in my case
+//     UINT8 sessionAttributes; // may be only 1
+//     UINT16 hmacSize;
+//     UINT8 hmac[MAX_PASS_LEN];
+// } TPM2_UNSEAL_COMMAND_LOCAL;
 
-    UINT8 respBuffer[1024];
-    ZeroMem(respBuffer, sizeof(respBuffer));
-    DEBUG((DEBUG_INFO, "The command will send now"));
-    CHECK_FOR_ERROR(tcg2Protocol->SubmitCommand(tcg2Protocol, sizeof(cmd), (UINT8*)&cmd, sizeof(respBuffer), respBuffer));
-    TPM2_UNSEAL_RESPONSE_LOCAL* resp = (TPM2_UNSEAL_RESPONSE_LOCAL*)respBuffer;
+// typedef struct {
+//     TPM_ST tag;
+//     UINT32 responseSize;
+//     TPM_RC responseCode;
+//     UINT8 outData[0];
+// } TPM2_UNSEAL_RESPONSE_LOCAL;
+// #pragma pack()
 
-    resp->responseCode = SwapBytes32(resp->responseCode);
-    if (resp->responseCode != TPM_RC_SUCCESS){
-        DEBUG((DEBUG_INFO, "Sealing secret from tpm failed!"));
-        return EFI_ACCESS_DENIED;
-    }
-    DEBUG((DEBUG_INFO, "Sealing secret from tpm succeed!"));
+// EFI_STATUS EFIAPI UnsealSecret(IN char userPass[], INTN userLen, OUT UINT8 secretBuffer[], INTN maxSecretLen,
+//                                OUT INTN* actualSecretLen) {
+//     TRACE_FUNCTION();
+//     if (userPass == NULL || secretBuffer == NULL || actualSecretLen == NULL) return EFI_INVALID_PARAMETER;
+//     EFI_TCG2_PROTOCOL* tcg2Protocol;
+//     CHECK_FOR_ERROR(gBS->LocateProtocol(&gEfiTcg2ProtocolGuid, NULL, (VOID**)&tcg2Protocol));
 
-    // UINT16 responseTag = SwapBytes16(resp->tag);
+//     UINT32 authSize = sizeof(TPM2_UNSEAL_COMMAND_LOCAL) -
+//                       (sizeof(TPMI_ST_COMMAND_TAG) + sizeof(UINT32) + sizeof(TPM_CC) + sizeof(TPMI_DH_OBJECT) + sizeof(UINT32));
 
-    return EFI_SUCCESS;
-}
+//     TPM2_UNSEAL_COMMAND_LOCAL cmd;
+//     ZeroMem(&cmd, sizeof(cmd));
+//     cmd.tag = SwapBytes16(TPM_ST_SESSIONS);       // 0x8002
+//     cmd.commandSize = SwapBytes32(sizeof(cmd));   // Total command size
+//     cmd.commandCode = SwapBytes32(TPM_CC_Unseal); // 0x0000015E
+//     cmd.itemHandle = SwapBytes32(g_itemHandle);
+//     cmd.authorizationSize = SwapBytes32(authSize);    // Size of auth section
+//     cmd.authHandle = SwapBytes32(TPM_RS_PW);          // 0x40000009
+//     cmd.nonceCallerSize = SwapBytes16(0);             // No nonce
+//     cmd.sessionAttributes = 0x00;                     // Session flags
+//     cmd.hmacSize = SwapBytes16((UINT16)MAX_PASS_LEN); // Size of HMAC buffer
+//     Sha256HashAll(userPass, userLen, cmd.hmac);
+
+//     UINT8 respBuffer[1024];
+//     ZeroMem(respBuffer, sizeof(respBuffer));
+//     DEBUG((DEBUG_INFO, "The command will send now"));
+//     CHECK_FOR_ERROR(tcg2Protocol->SubmitCommand(tcg2Protocol, sizeof(cmd), (UINT8*)&cmd, sizeof(respBuffer), respBuffer));
+//     TPM2_UNSEAL_RESPONSE_LOCAL* resp = (TPM2_UNSEAL_RESPONSE_LOCAL*)respBuffer;
+
+//     resp->responseCode = SwapBytes32(resp->responseCode);
+//     if (resp->responseCode != TPM_RC_SUCCESS){
+//         DEBUG((DEBUG_INFO, "Sealing secret from tpm failed!"));
+//         return EFI_ACCESS_DENIED;
+//     }
+//     DEBUG((DEBUG_INFO, "Sealing secret from tpm succeed!"));
+
+//     // UINT16 responseTag = SwapBytes16(resp->tag);
+
+//     return EFI_SUCCESS;
+// }
 
 // EFI_STATUS EFIAPI MeasureSecretToTpm(IN UINT8 secretData[], INTN secretSize) {
 //     TRACE_FUNCTION();
-//     if (secretData == NULL || secretSize == 0) return EFI_INVALID_PARAMETER;
+//     if (secretSize == 0) return EFI_INVALID_PARAMETER;
 
 //     EFI_TCG2_PROTOCOL* tcg2Protocol;
 //     CHECK_FOR_ERROR(gBS->LocateProtocol(&gEfiTcg2ProtocolGuid, NULL, (VOID**)&tcg2Protocol));
@@ -188,15 +193,11 @@ EFI_STATUS EFIAPI UnsealSecret(IN char userPass[], INTN userLen, OUT UINT8 secre
 //     tcgEvent->Size = (UINT32)totalEventSize;
 //     tcgEvent->Header.HeaderSize = sizeof(EFI_TCG2_EVENT_HEADER);
 //     tcgEvent->Header.HeaderVersion = EFI_TCG2_EVENT_HEADER_VERSION;
-//     tcgEvent->Header.PCRIndex = 12; // Регистр для твоего секрета
+//     tcgEvent->Header.PCRIndex = 12;
 //     tcgEvent->Header.EventType = EV_COMPACT_HASH;
 //     CopyMem(tcgEvent->Event, eventString, sizeof(eventString));
 
-//     // Скармливаем TPM сам секрет, чтобы он зафиксировал его хэш в PCR
-//     CHECK_FOR_ERROR_WITH_ACTIONS(
-//         tcg2Protocol->HashLogExtendEvent(tcg2Protocol, 0, (EFI_PHYSICAL_ADDRESS)(UINTN)secretData, (UINT64)secretSize,
-//         tcgEvent), Var4free());
+//     CHECK_FOR_ERROR(tcg2Protocol->HashLogExtendEvent(tcg2Protocol, 0, (EFI_PHYSICAL_ADDRESS)(UINTN)secretData, (UINT64)secretSize,tcgEvent));
 
-//     Var4free();
 //     return EFI_SUCCESS;
 // }

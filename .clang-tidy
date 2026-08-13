@@ -1,4 +1,5 @@
-Checks: "clang-diagnostic-*,clang-analyzer-*,bugprone-*,performance-*"
+Checks: "clang-diagnostic-*,clang-analyzer-*,bugprone-*,performance-*,misc-*,cert-*,
+-misc-include-cleaner,-misc-use-internal-linkage,-misc-unused-parameters"
 
 HeaderFilterRegex: '^(?!.*edk2).*$'
 
