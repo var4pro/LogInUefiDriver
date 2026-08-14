@@ -1,5 +1,6 @@
 #include "clang-tidy/ClangTidyCheck.h"
 #include "clang-tidy/ClangTidyModule.h"
+#include "clang-tidy/utils/OptionsUtils.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Lex/Lexer.h"
 
@@ -13,8 +14,14 @@ namespace uefi {
     // Check 1: Necessary TRACE_FUNCTION() in the start of the function
     // =========================================================================
     class TraceFunctionCheck : public ClangTidyCheck {
+    private:
+        const std::string RawTargetFiles;//
+        const std::vector<StringRef> TargetFiles;//
     public:
-        TraceFunctionCheck(StringRef name, ClangTidyContext* context) : ClangTidyCheck(name, context) {}
+        TraceFunctionCheck(StringRef name, ClangTidyContext* context)
+            : ClangTidyCheck(name, context), RawTargetFiles(Options.get("TargetFiles", "")),
+              TargetFiles(utils::options::parseStringList(RawTargetFiles)) {}//
+        void storeOptions(ClangTidyOptions::OptionMap& Opts) override { Options.store(Opts, "TargetFiles", RawTargetFiles); }//
 
         void registerMatchers(MatchFinder* finder) override {
             // All function definitions
@@ -25,11 +32,18 @@ namespace uefi {
             const auto* FD = result.Nodes.getNodeAs<FunctionDecl>("func");
             if (!FD || !FD->hasBody()) return;
 
-            // For Main.c only
             SourceManager& SM = *result.SourceManager;
             StringRef fileName = SM.getFilename(FD->getLocation());
-            if (!fileName.ends_with("Main.c")) return;
-            // ------------------------------------
+            // ---SELECTIVE FILE CHECK--- 
+            bool fileMatches = false;//
+            for (StringRef Target : TargetFiles) {//
+                if (!Target.empty() && fileName.ends_with(Target)) {//
+                    fileMatches = true;//
+                    break;//
+                }//
+            }//
+            if (!fileMatches) return;//
+            // ----------------------------
 
             if (FD->getNameAsString() == "DriverEntryPoint") return;
 
@@ -58,7 +72,7 @@ namespace uefi {
 
             // spare check
             if (!isTraceMacro) {
-                llvm::errs() << "I'M INSIDE SPARE CHECK";
+                //llvm::errs() << "I'M INSIDE SPARE CHECK";
                 SourceLocation expLoc = SM.getExpansionLoc(loc);
                 StringRef stmtText = Lexer::getSourceText(CharSourceRange::getTokenRange(expLoc), SM, langOpts);
                 if (stmtText.starts_with("TRACE_FUNCTION")) isTraceMacro = true;

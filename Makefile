@@ -1,8 +1,9 @@
 SHELL := /bin/bash
 
 SRC_DIR_V := $(notdir $(CURDIR))
-C_FILES_V   := $(shell find src include -type f -name "*.c" 2>/dev/null)
-H_FILES_V   := $(shell find src include -type f -name "*.h" 2>/dev/null)
+C_FILES_V   := $(shell find src -type f -name "*.c" ! -name "maintest.c" 2>/dev/null)
+H_FILES_V   := $(shell find include -type f -name "*.h" 2>/dev/null)
+TEST_C_FILES_V := $(shell find tests -type f -name "*.c" 2>/dev/null)
 SRC_FILES_V := $(C_FILES_V) $(H_FILES_V)
 PLUGIN_PATH_V := tools/clang-plugins/build/libUefiTidyModule.so
 
@@ -37,7 +38,7 @@ $(error [ERROR] Variable DISK_DIR_V isn't set! Set it on invoking make)
 endif
 endif
 
-.PHONY: all build copy run clean build-tools generate-flags format-do format-check tidy check-all
+.PHONY: all build copy run clean build-tools generate-flags format-do format-check tidy test check-all
  
 all: run
 
@@ -107,5 +108,13 @@ tidy: compile_flags.txt build-tools
 		echo "No source files found for clang-tidy."; \
 	fi
 
+test: compile_flags.txt build-tools
+	@echo "Running tests and writing report to tests/tests_tidy_report.txt..."
+	@if [ -n "$(TEST_C_FILES_V)" ]; then \
+		clang-tidy --load=$(PLUGIN_PATH_V) --checks='-*,uefi-*' --quiet $(TEST_C_FILES_V) > tests/tests_tidy_report.txt 2>&1 || true; \
+		echo "Tests complete! Check tests/tests_tidy_report.txt for details."; \
+	else \
+		echo "No test files found for clang-tidy."; \
+	fi
 
 check-all: tidy format-check
