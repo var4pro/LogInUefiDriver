@@ -1,4 +1,4 @@
 maintest.c
-*tidy_report.txt
-./compile_flags.txt
+*tidy_report*
+/compile_flags.txt
 build/
