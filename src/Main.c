@@ -1,7 +1,8 @@
+#include "Allocator.h"
 #include "LogUtils.h"
 #include "Utils.h"
-#include "Allocator.h"
 
+#include <Base.h>
 #include <Uefi.h>
 
 #include <IndustryStandard/Tpm20.h>
@@ -21,6 +22,7 @@
 
 static constexpr INTN MAX_PASS_LEN = 256;
 static constexpr INTN MAX_SECRET_LEN = MAX_SYM_DATA;
+
 static constexpr TPMI_DH_OBJECT g_master = 0x81000001;
 static constexpr TPMI_DH_OBJECT g_itemHandle = 0x81010001;
 static UINTN g_terminaСols = 0, g_terminalRows = 0;
@@ -31,21 +33,18 @@ static UINTN g_terminaСols = 0, g_terminalRows = 0;
                                                     OUT INTN* actualSecretLen);
 [[nodiscard]] extern EFI_STATUS EFIAPI MeasureSecretToTpm(IN UINT8 secretData[], INTN secretSize);
 
-
 EFI_STATUS EFIAPI DriverEntryPoint(IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE* SystemTable) {
-    char userPass[MAX_PASS_LEN] = {0};
+    AUTO_SET_TO_ZERO char userPass[GENERAL_ARRAY_MAX_LEN] = {0};
     INTN i = 0;
     CHECK_FOR_ERROR(PrintForm1Time());
     CHECK_FOR_ERROR(GetUserPassword(userPass, &i));
 
-    UINT8 secretBuffer[MAX_SECRET_LEN] = {0};
+    AUTO_SET_TO_ZERO UINT8 secretBuffer[GENERAL_ARRAY_MAX_LEN] = {0};
     INTN actualSize = 0;
-    Print(L"\'%a\'", userPass); // TODO: REMOVE
+    // Print(L"\'%a\'", userPass);
     CHECK_FOR_ERROR(UnsealSecret(userPass, i, secretBuffer, MAX_SECRET_LEN, &actualSize));
     CHECK_FOR_ERROR(MeasureSecretToTpm(secretBuffer, actualSize));
 
-    ZeroMem(userPass, MAX_SECRET_LEN);
-    ZeroMem(secretBuffer, MAX_SECRET_LEN);
     return EFI_SUCCESS;
 }
 
@@ -66,6 +65,7 @@ EFI_STATUS EFIAPI PrintForm1Time() {
     return EFI_SUCCESS;
 }
 
+//gets user password from ConIn, shows user how many chars he typed, but doesn't show them
 EFI_STATUS EFIAPI GetUserPassword(OUT char userPass[], OUT INTN* i) {
     TRACE_FUNCTION();
     CHECK_FOR_ERROR(gST->ConIn->Reset(gST->ConIn, false));
@@ -109,8 +109,14 @@ EFI_STATUS EFIAPI GetUserPassword(OUT char userPass[], OUT INTN* i) {
 }
 
 EFI_STATUS EFIAPI UnsealSecret(IN char userPass[], INTN userLen, OUT UINT8 secretBuffer[], INTN maxSecretLen,
-                               OUT INTN* actualSecretLen){return EFI_SUCCESS;};//mock
-EFI_STATUS EFIAPI MeasureSecretToTpm(IN UINT8 secretData[], INTN secretSize) { return EFI_SUCCESS; }; // mock
+                               OUT INTN* actualSecretLen) {
+    TRACE_FUNCTION();
+    return EFI_SUCCESS;
+}; // mock
+EFI_STATUS EFIAPI MeasureSecretToTpm(IN UINT8 secretData[], INTN secretSize) {
+    TRACE_FUNCTION();
+    return EFI_SUCCESS;
+}; // mock
 
 // #pragma pack(1)
 // typedef struct {
@@ -143,7 +149,8 @@ EFI_STATUS EFIAPI MeasureSecretToTpm(IN UINT8 secretData[], INTN secretSize) { r
 //     CHECK_FOR_ERROR(gBS->LocateProtocol(&gEfiTcg2ProtocolGuid, NULL, (VOID**)&tcg2Protocol));
 
 //     UINT32 authSize = sizeof(TPM2_UNSEAL_COMMAND_LOCAL) -
-//                       (sizeof(TPMI_ST_COMMAND_TAG) + sizeof(UINT32) + sizeof(TPM_CC) + sizeof(TPMI_DH_OBJECT) + sizeof(UINT32));
+//                       (sizeof(TPMI_ST_COMMAND_TAG) + sizeof(UINT32) + sizeof(TPM_CC) + sizeof(TPMI_DH_OBJECT) +
+//                       sizeof(UINT32));
 
 //     TPM2_UNSEAL_COMMAND_LOCAL cmd;
 //     ZeroMem(&cmd, sizeof(cmd));
@@ -197,7 +204,8 @@ EFI_STATUS EFIAPI MeasureSecretToTpm(IN UINT8 secretData[], INTN secretSize) { r
 //     tcgEvent->Header.EventType = EV_COMPACT_HASH;
 //     CopyMem(tcgEvent->Event, eventString, sizeof(eventString));
 
-//     CHECK_FOR_ERROR(tcg2Protocol->HashLogExtendEvent(tcg2Protocol, 0, (EFI_PHYSICAL_ADDRESS)(UINTN)secretData, (UINT64)secretSize,tcgEvent));
+//     CHECK_FOR_ERROR(tcg2Protocol->HashLogExtendEvent(tcg2Protocol, 0, (EFI_PHYSICAL_ADDRESS)(UINTN)secretData,
+//     (UINT64)secretSize,tcgEvent));
 
 //     return EFI_SUCCESS;
 // }

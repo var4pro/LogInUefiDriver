@@ -1,10 +1,9 @@
 Checks: "clang-diagnostic-*,clang-analyzer-*,bugprone-*,performance-*,misc-*,cert-*,
--misc-include-cleaner,-misc-use-internal-linkage,-misc-unused-parameters"
-
-HeaderFilterRegex: '^(?!.*edk2).*$'
+-misc-include-cleaner,-misc-use-internal-linkage,-misc-unused-parameters,uefi-*"
 
 WarningsAsErrors: ''
 SystemHeaders: false
+HeaderFilterRegex: '.*(src|include)/.*'
 
 CheckOptions:
   bugprone-unused-return-value.CheckedReturnTypes: '.*EFI_STATUS;.*RETURN_STATUS'

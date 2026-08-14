@@ -1,8 +1,10 @@
 SHELL := /bin/bash
 
 SRC_DIR_V := $(notdir $(CURDIR))
-SRC_FILES := $(shell find src include -type f \( -name "*.c" -o -name "*.h" \) 2>/dev/null)
-PLUGIN_PATH := tools/clang-plugins/build/libUefiTidyModule.so
+C_FILES_V   := $(shell find src include -type f -name "*.c" 2>/dev/null)
+H_FILES_V   := $(shell find src include -type f -name "*.h" 2>/dev/null)
+SRC_FILES_V := $(C_FILES_V) $(H_FILES_V)
+PLUGIN_PATH_V := tools/clang-plugins/build/libUefiTidyModule.so
 
 # Default build variables
 DSC_V       ?= MdeModulePkg/MdeModulePkg.dsc
@@ -15,17 +17,17 @@ EXTRA_FLAGS_V ?=
 # necessary
 WORKSPACE_DIR_V ?= 
 DISK_DIR_V      ?= 
-export EDK2_PATH := $(WORKSPACE_DIR_V)/edk2
+export EDK2_PATH_V := $(WORKSPACE_DIR_V)/edk2
 
 # not necessary
 EXTRA_PACKAGES_PATH_V ?= 
 TARGET_EFI_V := $(DISK_DIR_V)/App.efi
 
-CURRENT_GOALS := $(or $(MAKECMDGOALS),all)
+CURRENT_GOALS_V := $(or $(MAKECMDGOALS),all)
 # goals that need paths
-EDK2_GOALS := all build copy run clean
+EDK2_GOALS_V := all build copy run clean
 
-ifneq ($(filter $(EDK2_GOALS),$(CURRENT_GOALS)),)
+ifneq ($(filter $(EDK2_GOALS_V),$(CURRENT_GOALS_V)),)
 ifeq ($(strip $(WORKSPACE_DIR_V)),)
 $(error [ERROR] Variable WORKSPACE_DIR_V isn't set! Set it on invoking make)
 endif
@@ -50,7 +52,7 @@ build:
 copy: build
 	@BUILT_EFI=$$(find $(WORKSPACE_DIR_V)/edk2/Build/$(OUT_DIR_V)/$(TARGET_V)_$(TOOLCHAIN_V)/X64 -name "$(SRC_DIR_V).efi" | head -n 1); \
 	if [ -z "$$BUILT_EFI" ]; then \
-		exit 1; \
+		echo "[ERROR] EFI not found"; exit 1; \
 	fi; \
 	mkdir -p $(DISK_DIR_V); \
 	cp -f "$$BUILT_EFI" $(TARGET_EFI_V)
@@ -77,8 +79,8 @@ generate-flags: compile_flags.txt
 
 format-do:
 	@echo "Formatting code with clang-format..."
-	@if [ -n "$(SRC_FILES)" ]; then \
-		clang-format -i $(SRC_FILES); \
+	@if [ -n "$(SRC_FILES_V)" ]; then \
+		clang-format -i $(SRC_FILES_V); \
 		echo "Formatting done!"; \
 	else \
 		echo "No source files found to format."; \
@@ -86,21 +88,24 @@ format-do:
 
 format-check:
 	@echo "Checking code formatting..."
-	@if [ -n "$(SRC_FILES)" ]; then \
-		clang-format --dry-run --Werror $(SRC_FILES) || (echo "\n[ERROR] Code is not formatted properly. Run 'make format-do' to fix it." && exit 1); \
+	@if [ -n "$(SRC_FILES_V)" ]; then \
+		if ! clang-format --dry-run --Werror $(SRC_FILES_V); then \
+			echo -e "\n[ERROR] Code is not formatted properly. Run 'make format-do' to fix it."; \
+			exit 1; \
+		fi; \
 		echo "Formatting check passed!"; \
 	else \
 		echo "No source files found to check."; \
 	fi
-
+ 
 tidy: compile_flags.txt build-tools
 	@echo "Running clang-tidy and writing report to tidy_report.txt..."
-	@if [ -n "$(SRC_FILES)" ]; then \
-		clang-tidy --load=$(PLUGIN_PATH) --quiet $(SRC_FILES) > tidy_report.txt 2>&1 || true; \
+	@if [ -n "$(C_FILES_V)" ]; then \
+		clang-tidy --load=$(PLUGIN_PATH_V) --quiet $(C_FILES_V) > tidy_report.txt 2>&1 || true; \
 		echo "Analysis complete! Check tidy_report.txt for details."; \
 	else \
 		echo "No source files found for clang-tidy."; \
 	fi
 
 
-check-all: format-check tidy
+check-all: tidy format-check
