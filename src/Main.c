@@ -65,7 +65,7 @@ EFI_STATUS EFIAPI PrintForm1Time() {
     return EFI_SUCCESS;
 }
 
-//gets user password from ConIn, shows user how many chars he typed, but doesn't show them
+// gets user password from ConIn, shows user how many chars he typed, but doesn't show them
 EFI_STATUS EFIAPI GetUserPassword(OUT char userPass[], OUT INTN* i) {
     TRACE_FUNCTION();
     CHECK_FOR_ERROR(gST->ConIn->Reset(gST->ConIn, false));

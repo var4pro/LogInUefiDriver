@@ -19,6 +19,7 @@ VOID* Var4alloc(UINTN size) {
 }
 
 VOID cleanup_var4free(void* pp) {
+
     void** ptr_to_ptr = (void**)pp;
 
     if (ptr_to_ptr && *ptr_to_ptr) {
@@ -27,6 +28,6 @@ VOID cleanup_var4free(void* pp) {
     }
 }
 
-VOID cleanup_zero(void* pp){
+VOID cleanup_zero(void* pp) {
     if (pp) ZeroMem(pp, GENERAL_ARRAY_MAX_LEN);
 }
