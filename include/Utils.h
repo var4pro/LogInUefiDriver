@@ -1,9 +1,9 @@
 #pragma once
+#include <Uefi.h>
 #include <Library/CpuLib.h>
 #include <Library/DebugLib.h>
 #include <Library/UefiLib.h>
 #include <ProcessorBind.h>
-#include <Uefi.h>
 
 #define STR16_LEN(str) ((sizeof(str) / sizeof(CHAR16)) - 1)
 

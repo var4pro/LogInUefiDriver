@@ -1,9 +1,9 @@
 #include "Allocator.h"
 
+#include <Uefi.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/UefiBootServicesTableLib.h>
-#include <Uefi.h>
 
 VOID* Var4alloc(UINTN size) {
     VOID* buffer = NULL;

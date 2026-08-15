@@ -14,3 +14,4 @@ AllowShortIfStatementsOnASingleLine: WithoutElse
 AllowShortLoopsOnASingleLine: true
 IndentPPDirectives: BeforeHash
 RemoveBracesLLVM: true
+SortIncludes: Never
