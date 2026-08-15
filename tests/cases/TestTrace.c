@@ -51,13 +51,21 @@ EFI_STATUS EFIAPI Test9() { // WARNING
     return EFI_SUCCESS;
 }
 
-EFI_STATUS EFIAPI Test11() { // PASS
+EFI_STATUS EFIAPI Test10() { // PASS
 
     TRACE_FUNCTION();
     return EFI_SUCCESS;
 }
 
-EFI_STATUS EFIAPI Test12() { // PASS but redifinition
+EFI_STATUS EFIAPI Test11() { // PASS
+    TRACE_FUNCTION();
+    // TRACE_FUNCTION();
+    return EFI_SUCCESS;
+}
+
+#undef TRACE_FUNCTION
+#define TRACE_FUNCTION()
+EFI_STATUS EFIAPI Test12() { // WARNING
     TRACE_FUNCTION();
     // TRACE_FUNCTION();
     return EFI_SUCCESS;

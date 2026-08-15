@@ -10,8 +10,13 @@ Checks: >
   -modernize-use-trailing-return-type,
   -llvm-header-guard,
   -misc-non-private-member-variables-in-classes,
-  -cert-err58-cpp
+  -cert-err58-cpp,
+  -llvm-include-order,
+  -bugprone-throwing-static-initialization,
+  -misc-use-anonymous-namespace,
+  -misc-include-cleaner
 
 WarningsAsErrors: ''
 HeaderFilterRegex: '.*'
+SystemHeaders: false
 FormatStyle: file

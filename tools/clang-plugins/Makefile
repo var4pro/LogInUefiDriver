@@ -1,9 +1,11 @@
 SHELL := /bin/bash
 
-CPP_FILES_V := $(shell find src -type f -name "*.cpp" 2>/dev/null)
-SRC_FILES_V := $(CPP_FILES_V)
+REPO_ROOT_V := ../..
+SRC_FILES_V := $(shell find src -type f -name "*.cpp" 2>/dev/null)
+TEST_EXP_V   := $(REPO_ROOT_V)/tests/tests_tidy_report_expected.txt
+TEST_FILES_V := $(wildcard $(REPO_ROOT_V)/tests/cases/*.c)
 
-.PHONY: all build clean tidy format-do format-check-all
+.PHONY: all build clean tidy format-do test format-check-all hook-check
 
 all: build
 
@@ -14,13 +16,11 @@ build:
 	@cmake --build build
 	
 clean:
-	@echo "Cleaning Clang Plugin build..."
-	@rm -rf build
+	rm -rf build
 
 #tidy
 tidy:
-	@echo "Running clang-tidy on C++ plugin..."
-	@clang-tidy src/*.cpp -p build/
+	clang-tidy src/*.cpp -p build/
 
 #format
 format-do:
@@ -32,4 +32,14 @@ format-do:
 		echo "No source files found to format."; \
 	fi
 
-format-check-all: build format-do tidy
+#testing
+test: build
+	clang-tidy --quiet --load=build/libUefiTidyModule.so -p $(REPO_ROOT_V) $(TEST_FILES_V) 2>&1 \
+		| sed 's|.*tests/cases/|tests/cases/|g' \
+		| diff -u $(TEST_EXP_V) -
+
+#manually invoke this
+format-check-all: format-do hook-check
+
+#auto invoking
+hook-check: build tidy test

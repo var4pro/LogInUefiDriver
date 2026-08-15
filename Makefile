@@ -3,9 +3,7 @@ SHELL := /bin/bash
 SRC_DIR_V := $(notdir $(CURDIR))
 C_FILES_V   := $(shell find src -type f -name "*.c" ! -name "maintest.c" 2>/dev/null)
 H_FILES_V   := $(shell find include -type f -name "*.h" 2>/dev/null)
-TEST_C_FILES_V := $(shell find tests -type f -name "*.c" 2>/dev/null)
 SRC_FILES_V := $(C_FILES_V) $(H_FILES_V)
-PLUGIN_PATH_V := tools/clang-plugins/build/libUefiTidyModule.so
 
 # Default build variables
 DSC_V       ?= MdeModulePkg/MdeModulePkg.dsc
@@ -38,7 +36,7 @@ $(error [ERROR] Variable DISK_DIR_V isn't set! Set it on invoking make)
 endif
 endif
 
-.PHONY: all build copy run clean build-tools generate-flags format-do tidy tidy-tools check-all
+.PHONY: all build copy run clean generate-flags format-do tidy test-clang-plugins format-check-all-recursive hook-check
  
 all: run
 
@@ -69,15 +67,14 @@ clean:
 	rm -rf $(WORKSPACE_DIR_V)/edk2/Build/$(OUT_DIR_V)	
 
 #tidy
+generate-flags: compile_flags.txt
 compile_flags.txt: compile_flags.txt.in
 	@echo "Generating compile_flags.txt..."
 	@envsubst < $< > $@
 
-generate-flags: compile_flags.txt
- 
-tidy: compile_flags.txt build-tools
-	@echo "Running clang-tidy and writing report to tidy_report.txt..."
-	@clang-tidy --load=$(PLUGIN_PATH_V) $(C_FILES_V)
+tidy: compile_flags.txt 
+	$(MAKE) -C tools/clang-plugins build
+	clang-tidy --load=tools/clang-plugins/build/libUefiTidyModule.so $(C_FILES_V)
 
 #format
 format-do:
@@ -88,5 +85,11 @@ format-do:
 	else \
 		echo "No source files found to format."; \
 	fi
+	@$(MAKE) -C tools/clang-plugins format-do
 
-format-check-all: format-do tidy tidy-tools
+#manually invoke this
+format-check-all-recursive: format-do hook-check
+
+#auto invoking
+hook-check: compile_flags.txt tidy
+	$(MAKE) -C tools/clang-plugins hook-check
