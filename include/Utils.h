@@ -25,3 +25,11 @@
             return _macro_status;                                                                                   \
         }                                                                                                           \
     } while (0)
+
+#define LOG_IF_ERROR(EfiCall)                                                                                       \
+    do {                                                                                                            \
+        EFI_STATUS _macro_status = (EfiCall);                                                                       \
+        if (EFI_ERROR(_macro_status)) {                                                                             \
+            DEBUG((DEBUG_ERROR, "Error executing %a in %a:%d: %r\n", #EfiCall, __FILE__, __LINE__, _macro_status)); \
+        }                                                                                                           \
+    } while (0)

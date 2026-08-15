@@ -99,7 +99,7 @@
   RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
 
   #
-  # Crypto & TPM (Fixed dependencies!)
+  # Crypto & TPM
   #
   Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibTcg2/Tpm2DeviceLibTcg2.inf
   BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf

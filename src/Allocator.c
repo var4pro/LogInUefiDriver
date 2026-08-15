@@ -1,4 +1,5 @@
 #include "Allocator.h"
+#include "Utils.h"
 
 #include <Uefi.h>
 #include <Library/BaseMemoryLib.h>
@@ -22,7 +23,7 @@ VOID cleanup_var4free(void* pp) {
     void** ptr_to_ptr = (void**)pp;
 
     if (ptr_to_ptr && *ptr_to_ptr) {
-        gBS->FreePool(*ptr_to_ptr);
+        LOG_IF_ERROR(gBS->FreePool(*ptr_to_ptr));
         *ptr_to_ptr = NULL; // stack ptr cleanup
     }
 }

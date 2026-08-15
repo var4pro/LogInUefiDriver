@@ -1,13 +1,13 @@
 SHELL := /bin/bash
 
-SRC_DIR_V := $(notdir $(CURDIR))
+CUR_DIR_V := $(notdir $(CURDIR))
 C_FILES_V   := $(shell find src -type f -name "*.c" ! -name "maintest.c" 2>/dev/null)
 H_FILES_V   := $(shell find include -type f -name "*.h" 2>/dev/null)
 SRC_FILES_V := $(C_FILES_V) $(H_FILES_V)
 
 # Default build variables
-DSC_V       ?= MdeModulePkg/MdeModulePkg.dsc
-OUT_DIR_V 	?= MdeModule
+DSC_V       ?= $(CUR_DIR_V)/$(CUR_DIR_V).dsc
+OUT_DIR_V 	?= LogInPkg
 TARGET_V    ?= RELEASE
 TOOLCHAIN_V ?= GCC
 EXTRA_FLAGS_V ?=
@@ -50,7 +50,7 @@ build:
 	build -n 0 -a X64 -t $(TOOLCHAIN_V) -p $(DSC_V) -b $(TARGET_V) $(EXTRA_FLAGS_V)
 
 copy: build
-	@BUILT_EFI=$$(find $(WORKSPACE_DIR_V)/edk2/Build/$(OUT_DIR_V)/$(TARGET_V)_$(TOOLCHAIN_V)/X64 -name "$(SRC_DIR_V).efi" | head -n 1); \
+	@BUILT_EFI=$$(find $(WORKSPACE_DIR_V)/edk2/Build/$(OUT_DIR_V)/$(TARGET_V)_$(TOOLCHAIN_V)/X64 -name "$(CUR_DIR_V).efi" | head -n 1); \
 	if [ -z "$$BUILT_EFI" ]; then \
 		echo "[ERROR] EFI not found"; exit 1; \
 	fi; \

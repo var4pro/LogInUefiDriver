@@ -116,12 +116,32 @@ namespace uefi {
             }
         };
 
+        class UncheckedStatusCheck : public ClangTidyCheck {
+        public:
+            UncheckedStatusCheck(StringRef Name, ClangTidyContext* Context) : ClangTidyCheck(Name, Context) {}
+
+            void registerMatchers(MatchFinder* finder) override {
+                // Matches if the return type is either EFI_STATUS or RETURN_STATUS
+                auto statusType = hasType(qualType(anyOf(asString("EFI_STATUS"), asString("RETURN_STATUS"))));
+                finder->addMatcher(compoundStmt(forEach(callExpr(statusType).bind("ignored_call"))), this);
+            }
+
+            void check(const MatchFinder::MatchResult& Result) override {
+                const auto* Call = Result.Nodes.getNodeAs<CallExpr>("ignored_call");
+                if (!Call) return;
+
+                diag(Call->getBeginLoc(),
+                     "Return value of type 'EFI_STATUS' must not be ignored (wrap in CHECK_FOR_ERROR or handle it).");
+            }
+        };
+
         // MODULE REGISTRATION
         class UefiModule : public ClangTidyModule {
         public:
             void addCheckFactories(ClangTidyCheckFactories& checkFactories) override {
                 checkFactories.registerCheck<TraceFunctionCheck>("uefi-trace-function");
-                checkFactories.registerCheck<BannedAllocatorCheck>("uefi-banned-allocators");
+                checkFactories.registerCheck<BannedAllocatorCheck>("uefi-banned-allocator");
+                checkFactories.registerCheck<UncheckedStatusCheck>("uefi-unchecked-status");
             }
         };
     } // unnamed namespace

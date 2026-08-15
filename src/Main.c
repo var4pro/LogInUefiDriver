@@ -75,7 +75,7 @@ EFI_STATUS EFIAPI GetUserPassword(OUT char userPass[], OUT INTN* i) {
     INTN inputRow = (INTN)(g_terminalRows / 2) + 2;
 
     while (TRUE) {
-        gBS->WaitForEvent(1, &gST->ConIn->WaitForKey, &eventIndex);
+        CHECK_FOR_ERROR(gBS->WaitForEvent(1, &gST->ConIn->WaitForKey, &eventIndex));
         if (gST->ConIn->ReadKeyStroke(gST->ConIn, &key) != EFI_SUCCESS) continue;
 
         if (key.UnicodeChar != 0) {
