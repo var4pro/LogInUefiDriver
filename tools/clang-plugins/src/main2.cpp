@@ -23,8 +23,7 @@ namespace uefi {
               TargetFiles(utils::options::parseStringList(RawTargetFiles)) {}//
         void storeOptions(ClangTidyOptions::OptionMap& Opts) override { Options.store(Opts, "TargetFiles", RawTargetFiles); }//
 
-        void registerMatchers(MatchFinder* finder) override {
-            // All function definitions
+        void registerMatchers(MatchFinder* finder) override { // All function definitions
             finder->addMatcher(functionDecl(isDefinition(), isExpansionInMainFile()).bind("func"), this);
         }
 
@@ -37,7 +36,7 @@ namespace uefi {
             // ---SELECTIVE FILE CHECK--- 
             bool fileMatches = false;//
             for (StringRef Target : TargetFiles) {//
-                if (!Target.empty() && fileName.ends_with(Target)) {//
+                if (!Target.empty() && fileName.contains(Target)) {//
                     fileMatches = true;//
                     break;//
                 }//

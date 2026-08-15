@@ -13,7 +13,7 @@ include(AddLLVM)
 include_directories(${LLVM_INCLUDE_DIRS} ${CLANG_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
-add_library(UefiTidyModule SHARED main2.cpp)
+add_library(UefiTidyModule SHARED src/main2.cpp)
 
 target_link_libraries(UefiTidyModule
     PRIVATE

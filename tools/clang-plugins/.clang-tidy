@@ -1,0 +1,17 @@
+Checks: >
+  clang-diagnostic-*,
+  clang-analyzer-cplusplus-*,
+  bugprone-*,
+  performance-*,
+  modernize-*,
+  llvm-*,
+  misc-*,
+  cert-*,
+  -modernize-use-trailing-return-type,
+  -llvm-header-guard,
+  -misc-non-private-member-variables-in-classes,
+  -cert-err58-cpp
+
+WarningsAsErrors: ''
+HeaderFilterRegex: '.*'
+FormatStyle: file

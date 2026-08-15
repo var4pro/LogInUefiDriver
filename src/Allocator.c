@@ -19,7 +19,6 @@ VOID* Var4alloc(UINTN size) {
 }
 
 VOID cleanup_var4free(void* pp) {
-
     void** ptr_to_ptr = (void**)pp;
 
     if (ptr_to_ptr && *ptr_to_ptr) {
