@@ -1,7 +1,7 @@
 #pragma once
 #include <Uefi.h>
 
-static constexpr INTN GENERAL_ARRAY_MAX_LEN = 1024;
+static constexpr INTN GENERAL_ARRAY_MAX_LEN = 256;
 
 extern VOID* Var4alloc(UINTN size);
 
