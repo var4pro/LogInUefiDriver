@@ -25,7 +25,7 @@ static constexpr INTN MAX_SECRET_LEN = MAX_SYM_DATA;
 
 static constexpr TPMI_DH_OBJECT g_master = 0x81000001;
 static constexpr TPMI_DH_OBJECT g_itemHandle = 0x81010001;
-static UINTN g_terminaСols = 0, g_terminalRows = 0;
+static UINTN g_terminalCols = 0, g_terminalRows = 0;
 
 [[nodiscard]] extern EFI_STATUS EFIAPI PrintForm1Time();
 [[nodiscard]] extern EFI_STATUS EFIAPI GetUserPassword(OUT char userPass[], OUT INTN* i);
@@ -53,11 +53,11 @@ EFI_STATUS EFIAPI PrintForm1Time() {
     TRACE_FUNCTION();
     CHECK_FOR_ERROR(gST->ConOut->ClearScreen(gST->ConOut));
     CHECK_FOR_ERROR(gST->ConOut->EnableCursor(gST->ConOut, FALSE));
-    CHECK_FOR_ERROR(gST->ConOut->QueryMode(gST->ConOut, gST->ConOut->Mode->Mode, &g_terminaСols, &g_terminalRows));
+    CHECK_FOR_ERROR(gST->ConOut->QueryMode(gST->ConOut, gST->ConOut->Mode->Mode, &g_terminalCols, &g_terminalRows));
 
     CHAR16 text[] = L"Enter the password below:";
 
-    INTN textStartCol = (INTN)(g_terminaСols - STR16_LEN(text)) / 2;
+    INTN textStartCol = (INTN)(g_terminalCols - STR16_LEN(text)) / 2;
 
     CHECK_FOR_ERROR(gST->ConOut->SetCursorPosition(gST->ConOut, textStartCol, g_terminalRows / 2));
     Print(text);
@@ -91,12 +91,12 @@ EFI_STATUS EFIAPI GetUserPassword(OUT char userPass[], OUT INTN* i) {
         }
 
         INTN clearWidth = MAX_PASS_LEN + 4;
-        INTN clearStartCol = MIN(((INTN)g_terminaСols - clearWidth) / 2, 0);
+        INTN clearStartCol = MIN(((INTN)g_terminalCols - clearWidth) / 2, 0);
         CHECK_FOR_ERROR(gST->ConOut->SetCursorPosition(gST->ConOut, clearStartCol, inputRow));
         for (INTN j = 0; j < clearWidth; j++) Print(L" ");
 
         if (*i > 0) {
-            INTN asterisksStartCol = MIN(((INTN)g_terminaСols - *i) / 2, 0);
+            INTN asterisksStartCol = MIN(((INTN)g_terminalCols - *i) / 2, 0);
             CHECK_FOR_ERROR(gST->ConOut->SetCursorPosition(gST->ConOut, asterisksStartCol, inputRow));
 
             for (INTN j = 0; j < *i; j++) Print(L"*");
