@@ -2,8 +2,8 @@
 #include "LogUtils.h"
 #include "Utils.h"
 
-#include <Base.h>
 #include <Uefi.h>
+#include <Base.h>
 
 #include <IndustryStandard/Tpm20.h>
 #include <Library/BaseCryptLib.h>
