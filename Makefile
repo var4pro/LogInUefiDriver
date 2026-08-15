@@ -38,10 +38,11 @@ $(error [ERROR] Variable DISK_DIR_V isn't set! Set it on invoking make)
 endif
 endif
 
-.PHONY: all build copy run clean build-tools generate-flags format-do format-check tidy test check-all
+.PHONY: all build copy run clean build-tools generate-flags format-do tidy tidy-tools check-all
  
 all: run
 
+#default
 build:
 	@cd $(WORKSPACE_DIR_V) && \
 	export PACKAGES_PATH="$$PWD/edk2:$$PWD/edk2-libc$(if $(EXTRA_PACKAGES_PATH_V),:$(EXTRA_PACKAGES_PATH_V))" && \
@@ -65,19 +66,20 @@ run: copy
 		-net none
 
 clean:
-	rm -rf $(WORKSPACE_DIR_V)/edk2/Build/$(OUT_DIR_V)
+	rm -rf $(WORKSPACE_DIR_V)/edk2/Build/$(OUT_DIR_V)	
 
-build-tools: 
-	@echo "Building custom tools..."
-	@cmake -S tools/clang-plugins -B tools/clang-plugins/build
-	@cmake --build tools/clang-plugins/build
-
+#tidy
 compile_flags.txt: compile_flags.txt.in
 	@echo "Generating compile_flags.txt..."
 	@envsubst < $< > $@
 
 generate-flags: compile_flags.txt
+ 
+tidy: compile_flags.txt build-tools
+	@echo "Running clang-tidy and writing report to tidy_report.txt..."
+	@clang-tidy --load=$(PLUGIN_PATH_V) $(C_FILES_V)
 
+#format
 format-do:
 	@echo "Formatting code with clang-format..."
 	@if [ -n "$(SRC_FILES_V)" ]; then \
@@ -87,34 +89,4 @@ format-do:
 		echo "No source files found to format."; \
 	fi
 
-format-check:
-	@echo "Checking code formatting..."
-	@if [ -n "$(SRC_FILES_V)" ]; then \
-		if ! clang-format --dry-run --Werror $(SRC_FILES_V); then \
-			echo -e "\n[ERROR] Code is not formatted properly. Run 'make format-do' to fix it."; \
-			exit 1; \
-		fi; \
-		echo "Formatting check passed!"; \
-	else \
-		echo "No source files found to check."; \
-	fi
- 
-tidy: compile_flags.txt build-tools
-	@echo "Running clang-tidy and writing report to tidy_report.txt..."
-	@if [ -n "$(C_FILES_V)" ]; then \
-		clang-tidy --load=$(PLUGIN_PATH_V) --quiet $(C_FILES_V) > tidy_report.txt 2>&1 || true; \
-		echo "Analysis complete! Check tidy_report.txt for details."; \
-	else \
-		echo "No source files found for clang-tidy."; \
-	fi
-
-test: compile_flags.txt build-tools
-	@echo "Running tests and writing report to tests/tests_tidy_report.txt..."
-	@if [ -n "$(TEST_C_FILES_V)" ]; then \
-		clang-tidy --load=$(PLUGIN_PATH_V) --checks='-*,uefi-*' --quiet $(TEST_C_FILES_V) > tests/tests_tidy_report.txt 2>&1 || true; \
-		echo "Tests complete! Check tests/tests_tidy_report.txt for details."; \
-	else \
-		echo "No test files found for clang-tidy."; \
-	fi
-
-check-all: tidy format-check
+format-check-all: format-do tidy tidy-tools
