@@ -20,18 +20,26 @@
 #include <Protocol/Tcg2Protocol.h>
 #include <Uefi/UefiBaseType.h>
 
-static constexpr INTN MAX_PASS_LEN = 256;
+// consts
+static constexpr INTN MAX_PASS_LEN = 128;
 static constexpr INTN MAX_SECRET_LEN = MAX_SYM_DATA;
+static_assert(MAX_PASS_LEN <= GENERAL_ARRAY_MAX_LEN,
+              "MAX_PASS_LEN is larger than the cleanup buffer size! This will cause a stack overflow.");
+static_assert(MAX_SECRET_LEN <= GENERAL_ARRAY_MAX_LEN,
+              "MAX_SECRET_LEN is larger than the cleanup buffer size! This will cause a stack overflow.");
 
+// global vars
 static constexpr TPMI_DH_OBJECT g_master = 0x81000001;
 static constexpr TPMI_DH_OBJECT g_itemHandle = 0x81010001;
 static UINTN g_terminalCols = 0, g_terminalRows = 0;
 
-[[nodiscard]] extern EFI_STATUS EFIAPI PrintForm1Time();
-[[nodiscard]] extern EFI_STATUS EFIAPI GetUserPassword(OUT char userPass[], OUT INTN* i);
-[[nodiscard]] extern EFI_STATUS EFIAPI UnsealSecret(IN char userPass[], INTN userLen, OUT UINT8 secretBuffer[], INTN maxSecretLen,
-                                                    OUT INTN* actualSecretLen);
-[[nodiscard]] extern EFI_STATUS EFIAPI MeasureSecretToTpm(IN UINT8 secretData[], INTN secretSize);
+// forward declorations
+static EFI_STATUS PrintForm1Time();
+static EFI_STATUS GetUserPassword(OUT char userPass[], OUT INTN* i);
+static EFI_STATUS UnsealSecret(IN char userPass[], INTN userLen, OUT UINT8 secretBuffer[], INTN maxSecretLen,
+                               OUT INTN* actualSecretLen);
+static EFI_STATUS MeasureSecretToTpm(IN UINT8 secretData[], INTN secretSize);
+// forward ends
 
 EFI_STATUS EFIAPI DriverEntryPoint(IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE* SystemTable) {
     AUTO_SET_TO_ZERO char userPass[GENERAL_ARRAY_MAX_LEN] = {0};
@@ -48,8 +56,8 @@ EFI_STATUS EFIAPI DriverEntryPoint(IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABL
     return EFI_SUCCESS;
 }
 
-// print text and set cursor 1 row below in the center
-EFI_STATUS EFIAPI PrintForm1Time() {
+// prints text in the middle of the screen
+static EFI_STATUS PrintForm1Time() {
     TRACE_FUNCTION();
     CHECK_FOR_ERROR(gST->ConOut->ClearScreen(gST->ConOut));
     CHECK_FOR_ERROR(gST->ConOut->EnableCursor(gST->ConOut, FALSE));
@@ -61,18 +69,67 @@ EFI_STATUS EFIAPI PrintForm1Time() {
 
     CHECK_FOR_ERROR(gST->ConOut->SetCursorPosition(gST->ConOut, textStartCol, g_terminalRows / 2));
     Print(text);
+    DEBUG((DEBUG_INFO, "Init form printed"));
 
     return EFI_SUCCESS;
 }
 
 // gets user password from ConIn, shows user how many chars he typed, but doesn't show them
-EFI_STATUS EFIAPI GetUserPassword(OUT char userPass[], OUT INTN* i) {
+// static EFI_STATUS GetUserPassword1(OUT char userPass[], OUT INTN* i) {
+//     TRACE_FUNCTION();
+//     CHECK_FOR_ERROR(gST->ConIn->Reset(gST->ConIn, false));
+//     EFI_INPUT_KEY key = {0};
+//     UINTN eventIndex = 0;
+
+//     INTN inputRow = (INTN)(g_terminalRows / 2) + 2;
+
+//     while (TRUE) {
+//         CHECK_FOR_ERROR(gBS->WaitForEvent(1, &gST->ConIn->WaitForKey, &eventIndex));
+//         if (gST->ConIn->ReadKeyStroke(gST->ConIn, &key) != EFI_SUCCESS) continue;
+
+//         if (key.UnicodeChar != 0) {
+//             if (key.UnicodeChar == 0x08 && *i > 0) { // backspace
+//                 (*i)--;
+//                 userPass[*i] = 0;
+//             } else if (key.UnicodeChar == 0x0D) { // enter
+//                 break;
+//             } else if (*i < MAX_PASS_LEN && key.UnicodeChar >= 0x20 && key.UnicodeChar <= 0x7E) {
+//                 userPass[*i] = (char)key.UnicodeChar;
+//                 (*i)++;
+//             }
+//         }
+
+//         INTN clearWidth = MAX_PASS_LEN + 4;
+//         INTN clearStartCol = MAX(((INTN)g_terminalCols - clearWidth) / 2, 0);
+//         CHECK_FOR_ERROR(gST->ConOut->SetCursorPosition(gST->ConOut, clearStartCol, inputRow));
+//         for (INTN j = 0; j < clearWidth; j++) Print(L" ");
+
+//         if (*i > 0) {
+//             INTN asterisksStartCol = MAX(((INTN)g_terminalCols - *i) / 2, 0);
+//             CHECK_FOR_ERROR(gST->ConOut->SetCursorPosition(gST->ConOut, asterisksStartCol, inputRow));
+
+//             for (INTN j = 0; j < *i; j++) Print(L"*");
+//         }
+//     }
+
+//     CHECK_FOR_ERROR(gST->ConOut->SetCursorPosition(gST->ConOut, 0, inputRow + 2));
+//     DEBUG((DEBUG_INFO, "Password received from user"));
+//     return EFI_SUCCESS;
+// }
+
+// gets password from the user, and puts cursor 2 lines below
+static EFI_STATUS GetUserPassword(OUT char userPass[], OUT INTN* i) {
     TRACE_FUNCTION();
     CHECK_FOR_ERROR(gST->ConIn->Reset(gST->ConIn, false));
     EFI_INPUT_KEY key = {0};
     UINTN eventIndex = 0;
 
     INTN inputRow = (INTN)(g_terminalRows / 2) + 2;
+
+    // We maintain the same initial centered starting column as the original logic
+    // (or 0 if the max length pushes it to the edge).
+    INTN clearWidth = MAX_PASS_LEN + 4;
+    INTN startCol = MAX(((INTN)g_terminalCols - clearWidth) / 2, 0);
 
     while (TRUE) {
         CHECK_FOR_ERROR(gBS->WaitForEvent(1, &gST->ConIn->WaitForKey, &eventIndex));
@@ -90,31 +147,49 @@ EFI_STATUS EFIAPI GetUserPassword(OUT char userPass[], OUT INTN* i) {
             }
         }
 
-        INTN clearWidth = MAX_PASS_LEN + 4;
-        INTN clearStartCol = MIN(((INTN)g_terminalCols - clearWidth) / 2, 0);
-        CHECK_FOR_ERROR(gST->ConOut->SetCursorPosition(gST->ConOut, clearStartCol, inputRow));
-        for (INTN j = 0; j < clearWidth; j++) Print(L" ");
+        // --- Redraw Logic (Mimics TerminalState's wrap logic) ---
+        CHECK_FOR_ERROR(gST->ConOut->EnableCursor(gST->ConOut, false));
 
-        if (*i > 0) {
-            INTN asterisksStartCol = MIN(((INTN)g_terminalCols - *i) / 2, 0);
-            CHECK_FOR_ERROR(gST->ConOut->SetCursorPosition(gST->ConOut, asterisksStartCol, inputRow));
+        // Go back to the prompt start location
+        CHECK_FOR_ERROR(gST->ConOut->SetCursorPosition(gST->ConOut, startCol, inputRow));
 
-            for (INTN j = 0; j < *i; j++) Print(L"*");
-        }
+        // Print asterisks for current password length
+        for (INTN j = 0; j < *i; j++) Print(L"*");
+
+        // Print spaces to clear leftover characters trailing a backspace
+        // (Analogous to how EMPTY_BUFFER clears trailing texts)
+        Print(L"  ");
+
+        // Calculate cursor position utilizing modulo/division (handling line wraps natively)
+        INTN cursorOffset = startCol + *i;
+        INTN cursorCol = cursorOffset % (INTN)g_terminalCols;
+        INTN cursorRow = inputRow + (cursorOffset / (INTN)g_terminalCols);
+
+        // Safeguard to prevent cursor positioning outside the terminal rows
+        cursorRow = MIN(cursorRow, (INTN)g_terminalRows - 1);
+
+        CHECK_FOR_ERROR(gST->ConOut->SetCursorPosition(gST->ConOut, cursorCol, cursorRow));
+        CHECK_FOR_ERROR(gST->ConOut->EnableCursor(gST->ConOut, true));
     }
 
-    CHECK_FOR_ERROR(gST->ConOut->SetCursorPosition(gST->ConOut, 0, inputRow + 2));
+    // Set cursor below safely, adjusting for how many lines the password might have wrapped
+    INTN finalRow = inputRow + ((startCol + *i) / (INTN)g_terminalCols) + 2;
+    finalRow = MIN(finalRow, (INTN)g_terminalRows - 1);
+    CHECK_FOR_ERROR(gST->ConOut->SetCursorPosition(gST->ConOut, 0, finalRow));
+
     DEBUG((DEBUG_INFO, "Password received from user"));
     return EFI_SUCCESS;
 }
 
-EFI_STATUS EFIAPI UnsealSecret(IN char userPass[], INTN userLen, OUT UINT8 secretBuffer[], INTN maxSecretLen,
+static EFI_STATUS UnsealSecret(IN char userPass[], INTN userLen, OUT UINT8 secretBuffer[], INTN maxSecretLen,
                                OUT INTN* actualSecretLen) {
     TRACE_FUNCTION();
+    DEBUG((DEBUG_INFO, "Secret is unsealed"));
     return EFI_SUCCESS;
 }; // mock
-EFI_STATUS EFIAPI MeasureSecretToTpm(IN UINT8 secretData[], INTN secretSize) {
+static EFI_STATUS MeasureSecretToTpm(IN UINT8 secretData[], INTN secretSize) {
     TRACE_FUNCTION();
+    DEBUG((DEBUG_INFO, "Secret is measured"));
     return EFI_SUCCESS;
 }; // mock
 
@@ -141,7 +216,7 @@ EFI_STATUS EFIAPI MeasureSecretToTpm(IN UINT8 secretData[], INTN secretSize) {
 // } TPM2_UNSEAL_RESPONSE_LOCAL;
 // #pragma pack()
 
-// EFI_STATUS EFIAPI UnsealSecret(IN char userPass[], INTN userLen, OUT UINT8 secretBuffer[], INTN maxSecretLen,
+// EFI_STATUS UnsealSecret(IN char userPass[], INTN userLen, OUT UINT8 secretBuffer[], INTN maxSecretLen,
 //                                OUT INTN* actualSecretLen) {
 //     TRACE_FUNCTION();
 //     if (userPass == NULL || secretBuffer == NULL || actualSecretLen == NULL) return EFI_INVALID_PARAMETER;
@@ -183,7 +258,7 @@ EFI_STATUS EFIAPI MeasureSecretToTpm(IN UINT8 secretData[], INTN secretSize) {
 //     return EFI_SUCCESS;
 // }
 
-// EFI_STATUS EFIAPI MeasureSecretToTpm(IN UINT8 secretData[], INTN secretSize) {
+// EFI_STATUS MeasureSecretToTpm(IN UINT8 secretData[], INTN secretSize) {
 //     TRACE_FUNCTION();
 //     if (secretSize == 0) return EFI_INVALID_PARAMETER;
 

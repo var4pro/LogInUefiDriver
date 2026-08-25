@@ -32,11 +32,36 @@ format-do:
 		echo "No source files found to format."; \
 	fi
 
-#testing
-test: build
-	clang-tidy --quiet --load=build/libUefiTidyModule.so -p $(REPO_ROOT_V) $(TEST_FILES_V) 2>&1 \
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+TIDY_RUN = clang-tidy --quiet --load=build/libUefiTidyModule.so -p $(REPO_ROOT_V)
+TESTS_DIR = $(REPO_ROOT_V)/tests
+
+test-banned: build
+	@echo "Running Banned Allocators Test..."
+	@$(TIDY_RUN) --checks='-*,uefi-banned-allocator' $(TESTS_DIR)/cases/TestBanned.c 2>&1 \
 		| sed 's|.*tests/cases/|tests/cases/|g' \
-		| diff -u $(TEST_EXP_V) -
+		| diff -u $(TESTS_DIR)/test_banned_tidy_report_expected.txt -
+	@echo "  └─ Banned Allocators Test PASSED"
+
+test-trace: build
+	@echo "Running Trace Function Test..."
+	@$(TIDY_RUN) --checks='-*,uefi-trace-function' $(TESTS_DIR)/cases/TestTrace.c 2>&1 \
+		| sed 's|.*tests/cases/|tests/cases/|g' \
+		| diff -u $(TESTS_DIR)/test_trace_tidy_report_expected.txt -
+	@echo "  └─ Trace Function Test PASSED"
+
+test-unchecked: build
+	@echo "Running Unchecked Status Test..."
+	@$(TIDY_RUN) --checks='-*,uefi-unchecked-status' $(TESTS_DIR)/cases/TestUnchecked.c 2>&1 \
+		| sed 's|.*tests/cases/|tests/cases/|g' \
+		| diff -u $(TESTS_DIR)/test_unchecked_tidy_report_expected.txt -
+	@echo "  └─ Unchecked Status Test PASSED"
+
+# Run all tests sequentially
+test: test-banned test-trace test-unchecked
+	@echo "\n🎉 ALL UEFI STATIC ANALYSIS TESTS PASSED SUCCESSFULLY! 🎉\n"
 
 #manually invoke this
 format-check-all: format-do hook-check

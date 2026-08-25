@@ -1,7 +1,11 @@
 #include "Allocator.h"
-#include "Utils.h"
+#include "LogUtils.h"
 
 #include <Uefi.h>
+#include <Base.h>
+
+#include <Library/BaseLib.h>
+#include <ProcessorBind.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -27,7 +31,14 @@ VOID cleanup_var4free(void* pp) {
         *ptr_to_ptr = NULL; // stack ptr cleanup
     }
 }
+static VOID* SecureZeroMem(void* ptr, INTN len) {
+    if (!ptr) return ptr;
 
-VOID cleanup_zero(void* pp) {
-    if (pp) ZeroMem(pp, GENERAL_ARRAY_MAX_LEN);
+    volatile UINT8* vptr = (volatile UINT8*)ptr;
+    for (UINTN i = 0; i < len; i++) vptr[i] = 0;
+
+    MemoryFence();
+    return ptr;
 }
+
+VOID cleanup_zero(void* pp) { SecureZeroMem(pp, GENERAL_ARRAY_MAX_LEN); }

@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.31)
 project(trace_checker C CXX)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -13,7 +15,7 @@ include(AddLLVM)
 include_directories(${LLVM_INCLUDE_DIRS} ${CLANG_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
-add_library(UefiTidyModule SHARED src/main2.cpp)
+add_library(UefiTidyModule SHARED src/Main.cpp)
 
 target_link_libraries(UefiTidyModule
     PRIVATE
