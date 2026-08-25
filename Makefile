@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 CUR_DIR_V := $(notdir $(CURDIR))
 C_FILES_V   := $(shell find src -type f -name "*.c" ! -name "maintest.c" 2>/dev/null)
-H_FILES_V   := $(shell find include -type f -name "*.h" 2>/dev/null)
+H_FILES_V   := $(shell find $(CUR_DIR_V)/include -type f -name "*.h" 2>/dev/null)
 SRC_FILES_V := $(C_FILES_V) $(H_FILES_V)
 
 # Default build variables
@@ -23,14 +23,20 @@ EXTRA_PACKAGES_PATH_V ?=
 TARGET_EFI_V := $(DISK_DIR_V)/App.efi
 
 CURRENT_GOALS_V := $(or $(MAKECMDGOALS),all)
-# goals that need paths
-EDK2_GOALS_V := all build copy run clean
 
-ifneq ($(filter $(EDK2_GOALS_V),$(CURRENT_GOALS_V)),)
+# Goals that require WORKSPACE_DIR_V
+WORKSPACE_GOALS_V := all build copy run clean
+
+# Goals that strictly require DISK_DIR_V (build and clean excluded)
+DISK_GOALS_V := all copy run
+
+ifneq ($(filter $(WORKSPACE_GOALS_V),$(CURRENT_GOALS_V)),)
 ifeq ($(strip $(WORKSPACE_DIR_V)),)
 $(error [ERROR] Variable WORKSPACE_DIR_V isn't set! Set it on invoking make)
 endif
+endif
 
+ifneq ($(filter $(DISK_GOALS_V),$(CURRENT_GOALS_V)),)
 ifeq ($(strip $(DISK_DIR_V)),)
 $(error [ERROR] Variable DISK_DIR_V isn't set! Set it on invoking make)
 endif

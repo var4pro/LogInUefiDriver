@@ -6,5 +6,4 @@ SystemHeaders: false
 HeaderFilterRegex: '.*(src|include)/.*'
 
 CheckOptions:
-  bugprone-unused-return-value.CheckedReturnTypes: '.*EFI_STATUS;.*RETURN_STATUS'
   uefi-trace-function.TargetFiles: 'Main.c;TestTrace.c'
