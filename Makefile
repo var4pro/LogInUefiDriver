@@ -80,7 +80,7 @@ compile_flags.txt: compile_flags.txt.in
 
 tidy: compile_flags.txt 
 	$(MAKE) -C tools/clang-plugins build
-	clang-tidy --load=tools/clang-plugins/build/libUefiTidyModule.so $(C_FILES_V)
+	clang-tidy --warnings-as-errors='*' --load=tools/clang-plugins/build/libUefiTidyModule.so $(C_FILES_V)
 
 #format
 format-do:
