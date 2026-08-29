@@ -31,7 +31,7 @@ static_assert(MAX_SECRET_LEN <= GENERAL_ARRAY_MAX_LEN,
 // global vars
 // static constexpr TPMI_DH_OBJECT g_master = 0x81000001;
 // static constexpr TPMI_DH_OBJECT g_itemHandle = 0x81010001;
-static UINTN g_terminalCols = 0, g_terminalRows = 0;
+static UINTN g_terminalCols = 0, g_terminalRows = 0; // TODO: UNINIT
 
 // forward declorations
 static EFI_STATUS PrintForm1Time();
@@ -43,7 +43,7 @@ static EFI_STATUS MeasureSecretToTpm(IN UINT8 secretData[], INTN secretSize);
 
 EFI_STATUS EFIAPI DriverEntryPoint(__attribute__((unused)) IN EFI_HANDLE ImageHandle,
                                    __attribute__((unused)) IN EFI_SYSTEM_TABLE* SystemTable) {
-    AUTO_SET_TO_ZERO_CHAR char userPass[GENERAL_ARRAY_MAX_LEN] = {0};
+    AUTO_SET_TO_ZERO_CHAR char userPass[GENERAL_ARRAY_MAX_LEN] = {0}; // TODO: UNINIT
     INTN i = 0;
     CHECK_FOR_ERROR(PrintForm1Time());
     CHECK_FOR_ERROR(GetUserPassword(userPass, &i));
@@ -130,7 +130,7 @@ static EFI_STATUS GetUserPassword(OUT char userPass[], OUT INTN* i) {
     // We maintain the same initial centered starting column as the original logic
     // (or 0 if the max length pushes it to the edge).
     INTN clearWidth = MAX_PASS_LEN + 4;
-    INTN startCol = MAX(((INTN)g_terminalCols - clearWidth) / 2, 0);
+    INTN startCol = MAX(((INTN)g_terminalCols - (INTN)clearWidth) / 2, 0);
 
     while (TRUE) {
         CHECK_FOR_ERROR(gBS->WaitForEvent(1, &gST->ConIn->WaitForKey, &eventIndex));
