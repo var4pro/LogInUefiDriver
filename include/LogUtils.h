@@ -8,7 +8,7 @@ __attribute__((always_inline)) static inline void trace_exit(const char** func_n
 
 #define TRACE_FUNCTION()                                  \
     DEBUG((DEBUG_VERBOSE, "[ -> ENTER] %a\n", __func__)); \
-    const char* __trace_dummy_var __attribute__((cleanup(trace_exit))) = __func__
+    const char* _trace_dummy_var __attribute__((cleanup(trace_exit))) = __func__
 
 #define LOG_IF_ERROR(EfiCall)                                                                                       \
     do {                                                                                                            \

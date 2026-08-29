@@ -6,4 +6,4 @@ SystemHeaders: false
 HeaderFilterRegex: '.*(src|include)/.*'
 
 CheckOptions:
-  uefi-trace-function.TargetFiles: 'Main.c;TestTrace.c'
+  uefi-trace-function.TargetFiles: 'Main.c;Allocator.c'

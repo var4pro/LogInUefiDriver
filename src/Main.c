@@ -29,8 +29,8 @@ static_assert(MAX_SECRET_LEN <= GENERAL_ARRAY_MAX_LEN,
               "MAX_SECRET_LEN is larger than the cleanup buffer size! This will cause a stack overflow.");
 
 // global vars
-static constexpr TPMI_DH_OBJECT g_master = 0x81000001;
-static constexpr TPMI_DH_OBJECT g_itemHandle = 0x81010001;
+// static constexpr TPMI_DH_OBJECT g_master = 0x81000001;
+// static constexpr TPMI_DH_OBJECT g_itemHandle = 0x81010001;
 static UINTN g_terminalCols = 0, g_terminalRows = 0;
 
 // forward declorations
@@ -41,13 +41,14 @@ static EFI_STATUS UnsealSecret(IN char userPass[], INTN userLen, OUT UINT8 secre
 static EFI_STATUS MeasureSecretToTpm(IN UINT8 secretData[], INTN secretSize);
 // forward ends
 
-EFI_STATUS EFIAPI DriverEntryPoint(IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE* SystemTable) {
-    AUTO_SET_TO_ZERO char userPass[GENERAL_ARRAY_MAX_LEN] = {0};
+EFI_STATUS EFIAPI DriverEntryPoint(__attribute__((unused)) IN EFI_HANDLE ImageHandle,
+                                   __attribute__((unused)) IN EFI_SYSTEM_TABLE* SystemTable) {
+    AUTO_SET_TO_ZERO_CHAR char userPass[GENERAL_ARRAY_MAX_LEN] = {0};
     INTN i = 0;
     CHECK_FOR_ERROR(PrintForm1Time());
     CHECK_FOR_ERROR(GetUserPassword(userPass, &i));
 
-    AUTO_SET_TO_ZERO UINT8 secretBuffer[GENERAL_ARRAY_MAX_LEN] = {0};
+    AUTO_SET_TO_ZERO_UINT8 UINT8 secretBuffer[GENERAL_ARRAY_MAX_LEN] = {0};
     INTN actualSize = 0;
     // Print(L"\'%a\'", userPass);
     CHECK_FOR_ERROR(UnsealSecret(userPass, i, secretBuffer, MAX_SECRET_LEN, &actualSize));
@@ -61,13 +62,13 @@ static EFI_STATUS PrintForm1Time() {
     TRACE_FUNCTION();
     CHECK_FOR_ERROR(gST->ConOut->ClearScreen(gST->ConOut));
     CHECK_FOR_ERROR(gST->ConOut->EnableCursor(gST->ConOut, FALSE));
-    CHECK_FOR_ERROR(gST->ConOut->QueryMode(gST->ConOut, gST->ConOut->Mode->Mode, &g_terminalCols, &g_terminalRows));
+    CHECK_FOR_ERROR(gST->ConOut->QueryMode(gST->ConOut, (UINTN)gST->ConOut->Mode->Mode, &g_terminalCols, &g_terminalRows));
 
     CHAR16 text[] = L"Enter the password below:";
 
-    INTN textStartCol = (INTN)(g_terminalCols - STR16_LEN(text)) / 2;
+    INTN textStartCol = MAX(((INTN)g_terminalCols - (INTN)STR16_LEN(text)) / 2, 0);
 
-    CHECK_FOR_ERROR(gST->ConOut->SetCursorPosition(gST->ConOut, textStartCol, g_terminalRows / 2));
+    CHECK_FOR_ERROR(gST->ConOut->SetCursorPosition(gST->ConOut, (UINTN)textStartCol, g_terminalRows / 2));
     Print(text);
     DEBUG((DEBUG_INFO, "Init form printed"));
 
@@ -77,7 +78,7 @@ static EFI_STATUS PrintForm1Time() {
 // gets user password from ConIn, shows user how many chars he typed, but doesn't show them
 // static EFI_STATUS GetUserPassword1(OUT char userPass[], OUT INTN* i) {
 //     TRACE_FUNCTION();
-//     CHECK_FOR_ERROR(gST->ConIn->Reset(gST->ConIn, false));
+//     CHECK_FOR_ERROR(gST->ConIn->Reset(gST->ConIn, FALSE));
 //     EFI_INPUT_KEY key = {0};
 //     UINTN eventIndex = 0;
 
@@ -120,7 +121,7 @@ static EFI_STATUS PrintForm1Time() {
 // gets password from the user, and puts cursor 2 lines below
 static EFI_STATUS GetUserPassword(OUT char userPass[], OUT INTN* i) {
     TRACE_FUNCTION();
-    CHECK_FOR_ERROR(gST->ConIn->Reset(gST->ConIn, false));
+    CHECK_FOR_ERROR(gST->ConIn->Reset(gST->ConIn, FALSE));
     EFI_INPUT_KEY key = {0};
     UINTN eventIndex = 0;
 
@@ -141,17 +142,18 @@ static EFI_STATUS GetUserPassword(OUT char userPass[], OUT INTN* i) {
                 userPass[*i] = 0;
             } else if (key.UnicodeChar == 0x0D) { // enter
                 break;
-            } else if (*i < MAX_PASS_LEN && key.UnicodeChar >= 0x20 && key.UnicodeChar <= 0x7E) {
+            } else if (*i < MAX_PASS_LEN - 1 && key.UnicodeChar >= 0x20 && key.UnicodeChar <= 0x7E) {
                 userPass[*i] = (char)key.UnicodeChar;
                 (*i)++;
             }
         }
+        userPass[*i] = '\0';
 
         // --- Redraw Logic (Mimics TerminalState's wrap logic) ---
-        CHECK_FOR_ERROR(gST->ConOut->EnableCursor(gST->ConOut, false));
+        CHECK_FOR_ERROR(gST->ConOut->EnableCursor(gST->ConOut, FALSE));
 
         // Go back to the prompt start location
-        CHECK_FOR_ERROR(gST->ConOut->SetCursorPosition(gST->ConOut, startCol, inputRow));
+        CHECK_FOR_ERROR(gST->ConOut->SetCursorPosition(gST->ConOut, (UINTN)startCol, (UINTN)inputRow));
 
         // Print asterisks for current password length
         for (INTN j = 0; j < *i; j++) Print(L"*");
@@ -168,30 +170,29 @@ static EFI_STATUS GetUserPassword(OUT char userPass[], OUT INTN* i) {
         // Safeguard to prevent cursor positioning outside the terminal rows
         cursorRow = MIN(cursorRow, (INTN)g_terminalRows - 1);
 
-        CHECK_FOR_ERROR(gST->ConOut->SetCursorPosition(gST->ConOut, cursorCol, cursorRow));
-        CHECK_FOR_ERROR(gST->ConOut->EnableCursor(gST->ConOut, true));
+        CHECK_FOR_ERROR(gST->ConOut->SetCursorPosition(gST->ConOut, (UINTN)cursorCol, (UINTN)cursorRow));
+        CHECK_FOR_ERROR(gST->ConOut->EnableCursor(gST->ConOut, TRUE));
     }
 
     // Set cursor below safely, adjusting for how many lines the password might have wrapped
     INTN finalRow = inputRow + ((startCol + *i) / (INTN)g_terminalCols) + 2;
     finalRow = MIN(finalRow, (INTN)g_terminalRows - 1);
-    CHECK_FOR_ERROR(gST->ConOut->SetCursorPosition(gST->ConOut, 0, finalRow));
+    CHECK_FOR_ERROR(gST->ConOut->SetCursorPosition(gST->ConOut, 0, (UINTN)finalRow));
 
     DEBUG((DEBUG_INFO, "Password received from user"));
     return EFI_SUCCESS;
 }
 
-static EFI_STATUS UnsealSecret(IN char userPass[], INTN userLen, OUT UINT8 secretBuffer[], INTN maxSecretLen,
-                               OUT INTN* actualSecretLen) {
+static EFI_STATUS UnsealSecret(IN char[], INTN, OUT UINT8[], INTN, OUT INTN*) {
     TRACE_FUNCTION();
     DEBUG((DEBUG_INFO, "Secret is unsealed"));
     return EFI_SUCCESS;
-}; // mock
-static EFI_STATUS MeasureSecretToTpm(IN UINT8 secretData[], INTN secretSize) {
+} // mock
+static EFI_STATUS MeasureSecretToTpm(IN UINT8[], INTN) {
     TRACE_FUNCTION();
     DEBUG((DEBUG_INFO, "Secret is measured"));
     return EFI_SUCCESS;
-}; // mock
+} // mock
 
 // #pragma pack(1)
 // typedef struct {
