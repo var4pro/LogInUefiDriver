@@ -4,6 +4,14 @@
 -fshort-wchar
 -Iinclude/
 
+-Wall
+-Wextra
+-Wconversion
+-Wsign-conversion
+-Wshadow
+-Wformat=2
+-Werror
+
 -isystem
 $EDK2_PATH/ArmPkg/Include
 -isystem
