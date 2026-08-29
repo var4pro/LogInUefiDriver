@@ -70,6 +70,10 @@ export EDK2_PATH_V := $(WORKSPACE_DIR_V)/edk2
 
 generate-flags: compile_flags.txt
 compile_flags.txt: compile_flags.txt.in
+	@if [ -z "$(strip $(WORKSPACE_DIR_V))" ]; then \
+		echo "[ERROR] WORKSPACE_DIR_V is not set! Please set it before running."; \
+		exit 1; \
+	fi
 	@echo "Generating compile_flags.txt..."
 	@envsubst < $< > $@
 
