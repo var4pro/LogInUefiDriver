@@ -8,6 +8,7 @@
 -Wextra
 -Wconversion
 -Wsign-conversion
+-Wuninitialized
 -Wshadow
 -Wformat=2
 -Werror
