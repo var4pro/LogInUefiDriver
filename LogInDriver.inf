@@ -29,4 +29,4 @@
   gEfiTcg2ProtocolGuid
 
 [BuildOptions]
-GCC:*_*_X64_CC_FLAGS = -std=c23 -I$(MODULE_DIR)/include/ -Wall -Wextra -Wconversion -Wsign-conversion -Wuninitialized -Wshadow -Wformat=2 -Wno-unused-parameter
+GCC:*_*_X64_CC_FLAGS = -std=c23 -I$(MODULE_DIR)/include/ -fno-strict-overflow -Wall -Wextra -Wconversion -Wsign-conversion -Wuninitialized -Wshadow -Wformat=2 -Wno-unused-parameter

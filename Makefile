@@ -5,10 +5,10 @@ H_FILES_V   := $(shell find include -type f -name "*.h" 2>/dev/null)
 SRC_FILES_V := $(C_FILES_V) $(H_FILES_V)
 
 # Default build variables
-DSC_V       := LogInDriver/LogInDriver.dsc
-OUT_DIR_V 	?= LogInPkg
-TARGET_V    ?= RELEASE
-TOOLCHAIN_V := GCC
+DSC_V         := $(notdir $(CURDIR))/$(notdir $(firstword $(wildcard $(CURDIR)/*.dsc)))
+OUT_DIR_V     := $(shell awk -F'=' '/OUTPUT_DIRECTORY/ {print $$2}' $(CURDIR)/*.dsc | tr -d ' \r\n' | sed 's|^Build/||')
+TARGET_V      := RELEASE
+TOOLCHAIN_V   := GCC
 EXTRA_FLAGS_V ?=
 
 # paths
@@ -78,8 +78,8 @@ compile_flags.txt: compile_flags.txt.in
 	@envsubst < $< > $@
 
 tidy: compile_flags.txt 
-	$(MAKE) -C tools/clang-plugins build
-	clang-tidy --warnings-as-errors='*' --load=tools/clang-plugins/build/libUefiTidyModule.so $(C_FILES_V)
+	$(MAKE) -C tools/clang-tidy-uefi build
+	clang-tidy --warnings-as-errors='*' --load=tools/clang-tidy-uefi/build/libUefiTidyModule.so $(C_FILES_V)
 
 #format
 format-do:
@@ -90,11 +90,19 @@ format-do:
 	else \
 		echo "No source files found to format."; \
 	fi
-	@$(MAKE) -C tools/clang-plugins format-do
+	@$(MAKE) -C tools/clang-tidy-uefi format-do
 
 #manually invoke this
 format-check-all-recursive: format-do hook-check
 
 #auto invoking
 hook-check: compile_flags.txt tidy
-	$(MAKE) -C tools/clang-plugins hook-check WORKSPACE_DIR_V=$(WORKSPACE_DIR_V)
+	$(MAKE) -C tools/clang-tidy-uefi hook-check WORKSPACE_DIR_V=$(WORKSPACE_DIR_V)
+
+
+
+
+
+#tools
+print-%:
+	@echo '$* = $($*)'

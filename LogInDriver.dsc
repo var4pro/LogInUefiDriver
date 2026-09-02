@@ -1,9 +1,9 @@
 [Defines]
-  PLATFORM_NAME                  = LogInPkg
+  PLATFORM_NAME                  = LogInDriver
   PLATFORM_GUID                  = F4A23A83-3009-4DED-8113-BE7B62FCA9AA
   PLATFORM_VERSION               = 1.0
   DSC_SPECIFICATION              = 0x00010005
-  OUTPUT_DIRECTORY               = Build/LogInPkg
+  OUTPUT_DIRECTORY               = Build/LogInDriver
   SUPPORTED_ARCHITECTURES        = X64
   BUILD_TARGETS                  = DEBUG|RELEASE
   SKUID_IDENTIFIER               = DEFAULT
