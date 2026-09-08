@@ -29,4 +29,5 @@
   gEfiTcg2ProtocolGuid
 
 [BuildOptions]
-GCC:*_*_X64_CC_FLAGS = -std=c23 -I$(MODULE_DIR)/include/ -fno-strict-overflow -Wall -Wextra -Wconversion -Wsign-conversion -Wuninitialized -Wshadow -Wformat=2 -Wno-unused-parameter
+GCC:RELEASE_*_X64_CC_FLAGS = -std=c23 -I$(MODULE_DIR)/include/ -fno-strict-overflow -ftrivial-auto-var-init=zero -fzero-init-padding-bits=all -Wall -Wextra -Wconversion -Wsign-conversion -Wuninitialized -Wshadow -Wformat=2 -Wno-unused-parameter
+GCC:DEBUG_*_X64_CC_FLAGS = -std=c23 -I$(MODULE_DIR)/include/ -fno-strict-overflow -ftrivial-auto-var-init=zero -fzero-init-padding-bits=all -Wall -Wextra -Wconversion -Wsign-conversion -Wuninitialized -Wshadow -Wformat=2 -Wno-unused-parameter -flto -fanalyzer
