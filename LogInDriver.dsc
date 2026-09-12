@@ -5,7 +5,7 @@
   DSC_SPECIFICATION              = 0x00010005
   OUTPUT_DIRECTORY               = Build/LogInDriver
   SUPPORTED_ARCHITECTURES        = X64
-  BUILD_TARGETS                  = DEBUG|RELEASE
+  BUILD_TARGETS                  = DEBUG|RELEASE|NOOPT
   SKUID_IDENTIFIER               = DEFAULT
 
 [LibraryClasses]
@@ -106,7 +106,7 @@
   OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
   IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
 
-  StackCheckLib|MdePkg/Library/StackCheckLibNull/StackCheckLibNull.inf
+  StackCheckLib|MdePkg/Library/StackCheckLibNull/StackCheckLibNull.inf # TODO: MADE OR FIND A LIB
 [Components]
   LogInDriver/LogInDriver.inf
 
@@ -116,3 +116,14 @@
 !else
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000002 # RELEASE Build: WARNING (0x02) and ERROR (0x80000000) only
 !endif
+
+
+#page protections
+gEfiMdeModulePkgTokenSpaceGuid.PcdImageProtectionPolicy|0x03 #  protects everything(external and internal)
+gEfiMdeModulePkgTokenSpaceGuid.PcdDxeNxMemoryProtectionPolicy|0x0FFF # make everything
+
+
+gEfiMdeModulePkgTokenSpaceGuid.PcdNullPointerDetectionPropertyMask|0x81 # Null pointer detection for both PEI and DXE, throw hardware error instantly
+
+gEfiMdeModulePkgTokenSpaceGuid.PcdCpuStackGuard|TRUE # stack overflow protection
+gEfiMdeModulePkgTokenSpaceGuid.PcdSetNxForStack|TRUE # non-exec for stack

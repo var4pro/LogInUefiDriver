@@ -28,6 +28,14 @@
 [Protocols]
   gEfiTcg2ProtocolGuid
 
-[BuildOptions]
-GCC:RELEASE_*_X64_CC_FLAGS = -std=c23 -I$(MODULE_DIR)/include/ -fno-strict-overflow -ftrivial-auto-var-init=zero -fzero-init-padding-bits=all -Wall -Wextra -Wconversion -Wsign-conversion -Wuninitialized -Wshadow -Wformat=2 -Wno-unused-parameter
-GCC:DEBUG_*_X64_CC_FLAGS = -std=c23 -I$(MODULE_DIR)/include/ -fno-strict-overflow -ftrivial-auto-var-init=zero -fzero-init-padding-bits=all -Wall -Wextra -Wconversion -Wsign-conversion -Wuninitialized -Wshadow -Wformat=2 -Wno-unused-parameter -flto -fanalyzer
+[BuildOptions]              
+GCC:*_*_X64_CC_FLAGS = -Wall -Wextra -Wconversion -Wsign-conversion -Wuninitialized -Wshadow -Wformat=2 -Wno-unused-parameter
+GCC:*_*_X64_CC_FLAGS = -std=c23 -I$(MODULE_DIR)/include/ -fno-strict-overflow -ftrivial-auto-var-init=zero -fzero-init-padding-bits=all
+GCC:*_*_X64_CC_FLAGS = -funsigned-char -fcf-protection=full -fstack-protector-all -mstack-protector-guard=global
+GCC:*_*_X64_CC_FLAGS = -fno-defer-pop #-mindirect-branch-register -mindirect-branch=thunk -fstrub=internal
+GCC:*_*_X64_CC_FLAGS = -fno-isolate-erroneous-paths-dereference -fno-delete-null-pointer-checks -fno-finite-loops -fno-strict-aliasing
+GCC:*_*_X64_CC_FLAGS = -fzero-call-used-regs=all-gpr 
+GCC:RELEASE_*_X64_CC_FLAGS = -Wno-error
+
+#TODO: integrate analyzer into cicd pipeline
+GCC:NOOPT_*_X64_CC_FLAGS = -O0 -flto -fanalyzer
