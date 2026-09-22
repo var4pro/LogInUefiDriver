@@ -4,19 +4,16 @@
 #include <Uefi.h>
 #include <Base.h>
 
-#include <IndustryStandard/Tpm20.h>
-#include <Library/BaseCryptLib.h>
+// #include <Library/BaseCryptLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/TimerLib.h>
-#include <Library/Tpm2CommandLib.h>
-#include <Library/Tpm2DeviceLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
 #include <ProcessorBind.h>
 #include <Protocol/GraphicsOutput.h>
-#include <Protocol/Tcg2Protocol.h>
+// #include <Protocol/Tcg2Protocol.h>
 #include <Uefi/UefiBaseType.h>
 
 VOID* Var4alloc(UINTN size) {

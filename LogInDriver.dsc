@@ -101,7 +101,9 @@
   #
   # Crypto & TPM
   #
-  Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibTcg2/Tpm2DeviceLibTcg2.inf
+  #Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibTcg2/Tpm2DeviceLibTcg2.inf
+  #Tpm2CommandLib|SecurityPkg/Library/Tpm2CommandLib/Tpm2CommandLib.inf
+  #Tpm2HelpLib|SecurityPkg/Library/Tpm2HelpLib/Tpm2HelpLib.inf
   BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
   OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
   IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
@@ -116,14 +118,3 @@
 !else
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000002 # RELEASE Build: WARNING (0x02) and ERROR (0x80000000) only
 !endif
-
-
-#page protections
-gEfiMdeModulePkgTokenSpaceGuid.PcdImageProtectionPolicy|0x03 #  protects everything(external and internal)
-gEfiMdeModulePkgTokenSpaceGuid.PcdDxeNxMemoryProtectionPolicy|0x0FFF # make everything
-
-
-gEfiMdeModulePkgTokenSpaceGuid.PcdNullPointerDetectionPropertyMask|0x81 # Null pointer detection for both PEI and DXE, throw hardware error instantly
-
-gEfiMdeModulePkgTokenSpaceGuid.PcdCpuStackGuard|TRUE # stack overflow protection
-gEfiMdeModulePkgTokenSpaceGuid.PcdSetNxForStack|TRUE # non-exec for stack

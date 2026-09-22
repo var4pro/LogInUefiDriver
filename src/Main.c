@@ -5,29 +5,29 @@
 #include <Uefi.h>
 #include <Base.h>
 
-#include <IndustryStandard/Tpm20.h>
-#include <Library/BaseCryptLib.h>
+// #include <IndustryStandard/Tpm20.h>
+// #include <Library/BaseCryptLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/TimerLib.h>
-#include <Library/Tpm2CommandLib.h>
-#include <Library/Tpm2DeviceLib.h>
+// #include <Library/Tpm2CommandLib.h>
+// #include <Library/Tpm2DeviceLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
 #include <ProcessorBind.h>
 #include <Protocol/GraphicsOutput.h>
-#include <Protocol/Tcg2Protocol.h>
+// #include <Protocol/Tcg2Protocol.h>
 #include <Uefi/UefiBaseType.h>
 
 // consts
+static constexpr INTN MAX_SECRET_LEN = 128; // MAX_SYM_DATA
 static constexpr INTN MAX_PASS_LEN = 128;
-static constexpr INTN MAX_SECRET_LEN = MAX_SYM_DATA;
 static_assert(MAX_PASS_LEN <= GENERAL_ARRAY_MAX_LEN,
               "MAX_PASS_LEN is larger than the cleanup buffer size! This will cause a stack overflow.");
 static_assert(MAX_SECRET_LEN <= GENERAL_ARRAY_MAX_LEN,
               "MAX_SECRET_LEN is larger than the cleanup buffer size! This will cause a stack overflow.");
-
+//
 // global vars
 // static constexpr TPMI_DH_OBJECT g_master = 0x81000001;
 // static constexpr TPMI_DH_OBJECT g_itemHandle = 0x81010001;

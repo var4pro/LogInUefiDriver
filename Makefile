@@ -17,7 +17,7 @@ DISK_DIR_V      ?=
 
 CURRENT_GOALS_V := $(or $(MAKECMDGOALS),all)
 # Goals that require WORKSPACE_DIR_V
-WORKSPACE_GOALS_V := all build copy run clean
+WORKSPACE_GOALS_V := all build copy run clean format-check-all-recursive hook-check
 # Goals that strictly require DISK_DIR_V (build and clean excluded)
 DISK_GOALS_V := all copy run
 
@@ -96,7 +96,7 @@ format-do:
 format-check-all-recursive: format-do hook-check
 
 #auto invoking
-hook-check: compile_flags.txt tidy
+hook-check: compile_flags.txt build tidy
 	$(MAKE) -C tools/clang-tidy-uefi hook-check WORKSPACE_DIR_V=$(WORKSPACE_DIR_V)
 
 
