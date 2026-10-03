@@ -7,7 +7,7 @@ A proof-of-concept UEFI driver focused on secure user authentication, memory saf
 * **Secure Credential Handling:** Sensitive stack arrays are automatically zeroed out upon function exit.
 * **C-Style RAII (`__attribute__((cleanup))`):** Utilizes compiler extensions to ensure memory is automatically freed (`AUTO_FREE`) and sensitive data is securely wiped (`AUTO_SET_TO_ZERO`), eliminating memory leaks and data exposure even during early returns.
 * **Custom Static Analysis (SAST):** Includes a custom-built Clang-Tidy plugin (written in C++ using LLVM/Clang AST Matchers) to enforce secure coding standards at compile time.
-* **TPM 2.0 Integration (Mocked for now(will be updated up to 30.09.26)):** Demonstrates the conceptual workflow of unsealing secrets bound to a TPM using a password-based authorization session.
+* **TPM 2.0 Integration (Mocked for now(will be updated up to 30.09.26, upd: 14.10.26)):** Demonstrates the conceptual workflow of unsealing secrets bound to a TPM using a password-based authorization session.
 
 ## Project Architecture & Security
 
